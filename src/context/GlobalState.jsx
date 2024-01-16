@@ -1,19 +1,27 @@
-import { createContext, useContext, useReducer} from "react";
+import { createContext, useContext, useReducer, useEffect } from "react";
 import AppReducer from "./AppReducer";
 
 const initialState = {
     transactions: []
-} 
+}
 export const Context = createContext()
 
 export const useGlobalState = () => {
     const context = useContext(Context)
-    return  context
+    return context
 }
 
-export const GlobalProvider = ({children}) => {
-    
-    const [state, dispatch] = useReducer(AppReducer, initialState)
+export const GlobalProvider = ({ children }) => {
+    const [state, dispatch] = useReducer(AppReducer, initialState,
+        () => {
+            const localData = localStorage.getItem("transactions");
+            return localData ? JSON.parse(localData) : initialState;
+        });
+
+    /* Actualiza el estado cada vez que cambia con la funcion useEffect */
+    useEffect(() => {
+        localStorage.setItem('transactions', JSON.stringify(state))
+    }, [state])
 
     const addTransaction = (transaction) => {
         dispatch({
@@ -30,13 +38,14 @@ export const GlobalProvider = ({children}) => {
     }
 
     return (
-    <Context.Provider 
-        value={{ 
-            transactions: state.transactions,
-            addTransaction,
+        <Context.Provider
+            value={{
+                transactions: state.transactions,
+                addTransaction,
+                deleteTransaction
             }}
-    >
-        { children } 
-    </Context.Provider> )
+        >
+            {children}
+        </Context.Provider>)
 }
 
